@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dice Selector</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #111;
+    color: white;
+  }
+
+  h2 {
+    margin: 16px 0 8px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .section {
+    padding: 10px;
+  }
+
+  .dice-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .die {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  button {
+    display: block;
+    margin: 16px auto;
+    padding: 12px 24px;
+    font-size: 18px;
+    border: none;
+    border-radius: 12px;
+    background: #0a84ff;
+    color: white;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>Rollable Dice</h2>
+<div class="section">
+  <div id="rollable" class="dice-row"></div>
+</div>
+
+<button id="rollBtn">Roll</button>
+
+<h2>Selected</h2>
+<div class="section">
+  <div id="selected" class="dice-row"></div>
+</div>
+
+<h2>Discarded</h2>
+<div class="section">
+  <div id="discarded" class="dice-row"></div>
+</div>
+
+<script>
+const diceColors = [
+  { name: "Yellow", color: "#FFD60A" },
+  { name: "Blue", color: "#0A84FF" },
+  { name: "Pink", color: "#FF375F" },
+  { name: "Green", color: "#30D158" },
+  { name: "White", color: "#FFFFFF" },
+  { name: "Gray", color: "#8E8E93" }
+];
+
+let rollableDice = diceColors.map(d => ({ ...d, value: null }));
+let selectedDice = [];
+let discardedDice = [];
+
+const rollableEl = document.getElementById("rollable");
+const selectedEl = document.getElementById("selected");
+const discardedEl = document.getElementById("discarded");
+const rollBtn = document.getElementById("rollBtn");
+
+function render() {
+  rollableEl.innerHTML = "";
+  selectedEl.innerHTML = "";
+  discardedEl.innerHTML = "";
+
+  rollableDice.forEach(die => {
+    const el = createDie(die, () => selectDie(die));
+    rollableEl.appendChild(el);
+  });
+
+  selectedDice.forEach(die => {
+    selectedEl.appendChild(createDie(die));
+  });
+
+  discardedDice.forEach(die => {
+    discardedEl.appendChild(createDie(die));
+  });
+
+  rollBtn.disabled = rollableDice.some(d => d.value === null) === false;
+}
+
+function createDie(die, onClick) {
+  const el = document.createElement("div");
+  el.className = "die";
+  el.style.background = die.color;
+  el.textContent = die.value ?? "–";
+  if (onClick && die.value !== null) el.onclick = onClick;
+  if (!onClick) el.classList.add("disabled");
+  return el;
+}
+
+function rollDice() {
+  rollableDice.forEach(d => {
+    d.value = Math.floor(Math.random() * 6) + 1;
+  });
+  render();
+}
+
+function selectDie(selected) {
+  selectedDice.push(selected);
+
+  rollableDice = rollableDice.filter(die => {
+    if (die === selected) return false;
+    if (die.value < selected.value) {
+      discardedDice.push(die);
+      return false;
+    }
+    return true;
+  });
+
+  render();
+}
+
+rollBtn.onclick = rollDice;
+render();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
