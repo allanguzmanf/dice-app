@@ -92,7 +92,7 @@
   <button id="resetBtn" class="secondary">Reset</button>
 </div>
 
-<h2>Selected</h2>
+<h2>Selected (max 3)</h2>
 <div class="section">
   <div id="selected" class="dice-row"></div>
 </div>
@@ -103,6 +103,8 @@
 </div>
 
 <script>
+const MAX_SELECTIONS = 3;
+
 const diceColors = [
   { name: "Yellow", color: "#FFD60A" },
   { name: "Blue", color: "#0A84FF" },
@@ -145,8 +147,8 @@ function render() {
   discardedDice.forEach(die => discardedEl.appendChild(createDie(die)));
 
   const hasUnrolled = rollableDice.some(d => d.value === null);
-  rollBtn.disabled = !hasUnrolled;
-  rerollBtn.disabled = hasUnrolled;
+  rollBtn.disabled = !hasUnrolled || selectedDice.length >= MAX_SELECTIONS;
+  rerollBtn.disabled = hasUnrolled || selectedDice.length >= MAX_SELECTIONS;
 }
 
 function createDie(die, onClick) {
@@ -172,6 +174,8 @@ function rollDice() {
 }
 
 function selectDie(selected) {
+  if (selectedDice.length >= MAX_SELECTIONS) return;
+
   selectedDice.push(selected);
 
   rollableDice = rollableDice.filter(die => {
@@ -183,9 +187,14 @@ function selectDie(selected) {
     return true;
   });
 
-  // 🔑 IMPORTANT FIX:
-  // Clear values of remaining rollable dice so user must roll again
-  rollableDice.forEach(d => d.value = null);
+  // If max selections reached, discard all remaining rollable dice
+  if (selectedDice.length === MAX_SELECTIONS) {
+    discardedDice.push(...rollableDice);
+    rollableDice = [];
+  } else {
+    // Otherwise clear values so user must roll again
+    rollableDice.forEach(d => d.value = null);
+  }
 
   render();
 }
