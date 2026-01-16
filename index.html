@@ -10,54 +10,72 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system, system-ui, sans-serif;
-  background: #111;
-  color: white;
-}
-h2 {
-  margin: 16px 0 8px;
-  text-align: center;
-}
-.section {
-  padding: 10px;
-}
-.dice-row {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.die {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: bold;
-  color: black;
-  cursor: pointer;
-}
-.disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
-button {
-  display: block;
-  margin: 16px auto;
-  padding: 12px 24px;
-  font-size: 18px;
-  border: none;
-  border-radius: 12px;
-  background: #0a84ff;
-  color: white;
-}
-button:disabled {
-  opacity: 0.4;
-}
+  body {
+    margin: 0;
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #111;
+    color: white;
+  }
+
+  h2 {
+    margin: 16px 0 8px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .section {
+    padding: 10px;
+  }
+
+  .dice-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .die {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 16px 0;
+  }
+
+  button {
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 12px;
+    background: #0a84ff;
+    color: white;
+  }
+
+  button.secondary {
+    background: #3a3a3c;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+  }
 </style>
 </head>
 
@@ -68,7 +86,11 @@ button:disabled {
   <div id="rollable" class="dice-row"></div>
 </div>
 
-<button id="rollBtn">Roll</button>
+<div class="buttons">
+  <button id="rollBtn">Roll</button>
+  <button id="rerollBtn" class="secondary">Re-roll</button>
+  <button id="resetBtn" class="secondary">Reset</button>
+</div>
 
 <h2>Selected</h2>
 <div class="section">
@@ -90,14 +112,24 @@ const diceColors = [
   { name: "Gray", color: "#8E8E93" }
 ];
 
-let rollableDice = diceColors.map(d => ({ ...d, value: null }));
+let rollableDice = [];
 let selectedDice = [];
 let discardedDice = [];
 
 const rollableEl = document.getElementById("rollable");
 const selectedEl = document.getElementById("selected");
 const discardedEl = document.getElementById("discarded");
+
 const rollBtn = document.getElementById("rollBtn");
+const rerollBtn = document.getElementById("rerollBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+function resetGame() {
+  rollableDice = diceColors.map(d => ({ ...d, value: null }));
+  selectedDice = [];
+  discardedDice = [];
+  render();
+}
 
 function render() {
   rollableEl.innerHTML = "";
@@ -112,7 +144,9 @@ function render() {
   selectedDice.forEach(die => selectedEl.appendChild(createDie(die)));
   discardedDice.forEach(die => discardedEl.appendChild(createDie(die)));
 
-  rollBtn.disabled = rollableDice.some(d => d.value === null) === false;
+  const allRolled = rollableDice.length > 0 && rollableDice.every(d => d.value !== null);
+  rollBtn.disabled = allRolled;
+  rerollBtn.disabled = !allRolled;
 }
 
 function createDie(die, onClick) {
@@ -120,18 +154,26 @@ function createDie(die, onClick) {
   el.className = "die";
   el.style.background = die.color;
   el.textContent = die.value ?? "–";
-  if (onClick && die.value !== null) el.onclick = onClick;
-  if (!onClick) el.classList.add("disabled");
+
+  if (onClick && die.value !== null) {
+    el.onclick = onClick;
+  } else {
+    el.classList.add("disabled");
+  }
+
   return el;
 }
 
 function rollDice() {
-  rollableDice.forEach(d => d.value = Math.floor(Math.random() * 6) + 1);
+  rollableDice.forEach(d => {
+    d.value = Math.floor(Math.random() * 6) + 1;
+  });
   render();
 }
 
 function selectDie(selected) {
   selectedDice.push(selected);
+
   rollableDice = rollableDice.filter(die => {
     if (die === selected) return false;
     if (die.value < selected.value) {
@@ -140,11 +182,15 @@ function selectDie(selected) {
     }
     return true;
   });
+
   render();
 }
 
 rollBtn.onclick = rollDice;
-render();
+rerollBtn.onclick = rollDice;
+resetBtn.onclick = resetGame;
+
+resetGame();
 </script>
 
 <script>
