@@ -1,7 +1,0 @@
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open("dice-cache").then(cache =>
-      cache.addAll(["./", "./index.html", "./manifest.json"])
-    )
-  );
-});
