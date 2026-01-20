@@ -76,6 +76,15 @@
   button:disabled {
     opacity: 0.4;
   }
+
+  @keyframes rolling {
+    0%, 100% { transform: rotateX(0deg) rotateY(0deg); }
+    50% { transform: rotateX(360deg) rotateY(360deg); }
+  }
+
+  .die.rolling {
+    animation: rolling 0.5s ease-in-out;
+  }
 </style>
 </head>
 
@@ -138,12 +147,24 @@ function render() {
   selectedEl.innerHTML = "";
   discardedEl.innerHTML = "";
 
+  // Add 3 empty placeholder dice to selected
+  for (let i = 0; i < 3; i++) {
+    const placeholder = document.createElement("div");
+    placeholder.className = "die disabled";
+    placeholder.style.background = "#3a3a3c";
+    placeholder.textContent = "–";
+    selectedEl.appendChild(placeholder);
+  }
+
   rollableDice.forEach(die => {
     const el = createDie(die, () => selectDie(die));
     rollableEl.appendChild(el);
   });
 
-  selectedDice.forEach(die => selectedEl.appendChild(createDie(die)));
+  selectedDice.forEach(die => {
+    const el = createDie(die);
+    selectedEl.replaceChild(el, selectedEl.children[selectedDice.indexOf(die)]);
+  });
   discardedDice.forEach(die => discardedEl.appendChild(createDie(die)));
 
   const hasUnrolled = rollableDice.some(d => d.value === null);
@@ -167,10 +188,18 @@ function createDie(die, onClick) {
 }
 
 function rollDice() {
-  rollableDice.forEach(d => {
-    d.value = Math.floor(Math.random() * 6) + 1;
+  // Add rolling animation to all rollable dice
+  document.querySelectorAll("#rollable .die").forEach(die => {
+    die.classList.add("rolling");
   });
-  render();
+
+  // Simulate animation duration before showing results
+  setTimeout(() => {
+    rollableDice.forEach(d => {
+      d.value = Math.floor(Math.random() * 6) + 1;
+    });
+    render();
+  }, 500);
 }
 
 function selectDie(selected) {
