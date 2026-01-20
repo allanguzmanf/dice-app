@@ -76,15 +76,6 @@
   button:disabled {
     opacity: 0.4;
   }
-
-  @keyframes rolling {
-    0%, 100% { transform: rotateX(0deg) rotateY(0deg); }
-    50% { transform: rotateX(360deg) rotateY(360deg); }
-  }
-
-  .die.rolling {
-    animation: rolling 0.5s ease-in-out;
-  }
 </style>
 </head>
 
@@ -188,18 +179,29 @@ function createDie(die, onClick) {
 }
 
 function rollDice() {
-  // Add rolling animation to all rollable dice
-  document.querySelectorAll("#rollable .die").forEach(die => {
-    die.classList.add("rolling");
-  });
+  const rollableElements = document.querySelectorAll("#rollable .die");
+  const startTime = Date.now();
+  const duration = 1000; // 1 second
 
-  // Simulate animation duration before showing results
-  setTimeout(() => {
-    rollableDice.forEach(d => {
-      d.value = Math.floor(Math.random() * 6) + 1;
-    });
-    render();
-  }, 500);
+  function animateRoll() {
+    const elapsed = Date.now() - startTime;
+
+    if (elapsed < duration) {
+      // Update each die with a random number 1-6
+      rollableElements.forEach(el => {
+        el.textContent = Math.floor(Math.random() * 6) + 1;
+      });
+      requestAnimationFrame(animateRoll);
+    } else {
+      // Animation complete, set final values
+      rollableDice.forEach(d => {
+        d.value = Math.floor(Math.random() * 6) + 1;
+      });
+      render();
+    }
+  }
+
+  animateRoll();
 }
 
 function selectDie(selected) {
